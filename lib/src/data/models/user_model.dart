@@ -72,7 +72,7 @@ class UserModel extends Equatable {
       'name': name,
       'image': image,
       'embeddings': embeddings,
-      'distance': distance,
+      'distance': distance.isFinite ? distance : null,
       'location': location != null ? RectJsons.toJson(location!) : null,
       'face': face?.toJson(),
     };

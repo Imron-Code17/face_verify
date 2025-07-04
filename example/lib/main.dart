@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Badieh Nader.
 // ignore_for_file: depend_on_referenced_packages
 
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
@@ -322,6 +323,9 @@ class _MyHomePageState extends State<MyHomePage> {
         registerUserInputs: [registerInput],
         cameraDescription: cameras.first,
       );
+
+      final encodeData = json.encode(newUsers.first.toJson());
+      log('✅ User registered successfully: $encodeData');
 
       setState(() {
         users.addAll(newUsers);
