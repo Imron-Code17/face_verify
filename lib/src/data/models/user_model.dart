@@ -1,6 +1,9 @@
 import 'dart:ui';
 
 import 'package:equatable/equatable.dart';
+import 'package:face_verify/extension/face_from_json.dart';
+import 'package:face_verify/extension/face_to_json.dart';
+import 'package:face_verify/extension/rect_to_json.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class UserModel extends Equatable {
@@ -44,6 +47,37 @@ class UserModel extends Equatable {
     );
   }
 
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      image: json['image'] as String?,
+      embeddings: List<double>.from(json['embeddings'] ?? []),
+      distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
+      location: json['location'] != null
+          ? Rect.fromLTRB(
+              (json['location']['left'] as num).toDouble(),
+              (json['location']['top'] as num).toDouble(),
+              (json['location']['right'] as num).toDouble(),
+              (json['location']['bottom'] as num).toDouble(),
+            )
+          : null,
+      face: json['face'] != null ? FaceJsons.fromJson(json['face']) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'image': image,
+      'embeddings': embeddings,
+      'distance': distance,
+      'location': location != null ? RectJsons.toJson(location!) : null,
+      'face': face?.toJson(),
+    };
+  }
+
   @override
   String toString() {
     return 'UserModel { id: $id, name: $name, image: $image, distance: $distance }';
@@ -53,5 +87,10 @@ class UserModel extends Equatable {
   List<Object?> get props => [
         id,
         name,
+        image,
+        embeddings,
+        distance,
+        location,
+        face,
       ];
 }

@@ -3,7 +3,7 @@ import 'rect_to_json.dart' as r;
 
 extension FaceJson on Face {
   Map<String, dynamic> toJson() => {
-        'rect': r.RectJson.toJson(boundingBox),
+        'rect': r.RectJsons.toJson(boundingBox),
         'headEulerAngleX': headEulerAngleX,
         'headEulerAngleY': headEulerAngleY,
         'headEulerAngleZ': headEulerAngleZ,

@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-class RectJson {
+class RectJsons {
   static Rect fromJson(Map<String, dynamic> json) => Rect.fromLTRB(
         json['left'].toDouble(),
         json['top'].toDouble(),
