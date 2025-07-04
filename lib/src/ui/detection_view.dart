@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:face_verify/src/data/models/user_model.dart';
 import 'package:face_verify/src/ui/widgets/camera_view.dart';
@@ -66,7 +67,7 @@ class DetectionViewState extends State<DetectionView>
     with WidgetsBindingObserver {
   CameraController? cameraController;
   late FaceDetectorService faceDetectorService;
-  late RecognitionService recognitionService;
+  late EnhancedRecognitionService recognitionService;
 
   late List<Face> detectedFaces = [];
   late Set<UserModel> recognitions = {};
@@ -90,7 +91,7 @@ class DetectionViewState extends State<DetectionView>
     super.dispose();
     await cameraController?.dispose();
     await faceDetectorService.dispose();
-    await recognitionService.dispose();
+    // await recognitionService.dispose();
   }
 
   @override
@@ -128,7 +129,7 @@ class DetectionViewState extends State<DetectionView>
       );
 
       // initialize recognition service
-      recognitionService = RecognitionService(
+      recognitionService = EnhancedRecognitionService(
         users: widget.users,
         rotationCompensation: faceDetectorService.rotationCompensation!,
         sensorOrientation: widget.cameraDescription.sensorOrientation,
@@ -137,33 +138,38 @@ class DetectionViewState extends State<DetectionView>
 
       cameraController!.startImageStream(
         (image) async {
-          frameCount++;
-          if (frameCount % widget.frameSkipCount == 0) {
-            if (!isBusy) {
-              isBusy = true;
-              setState(() {});
+          try {
+            frameCount++;
+            if (frameCount % widget.frameSkipCount == 0) {
+              if (!isBusy) {
+                isBusy = true;
+                setState(() {});
 
-              //detect faces from the camera frame
-              detectedFaces = await faceDetectorService.doFaceDetection(
-                  faceDetectorSource: FaceDetectorSource.cameraFrame,
-                  cameraFrame: image);
+                //detect faces from the camera frame
+                detectedFaces = await faceDetectorService.doFaceDetection(
+                    faceDetectorSource: FaceDetectorSource.cameraFrame,
+                    cameraFrame: image);
 
-              if (!recognitionService.isRecognized) {
-                //perform face recognition on detected faces
-                if (recognitionService.performFaceRecognition(
-                  recognitions: recognitions,
-                  cameraImageFrame: image,
-                  faces: detectedFaces,
-                )) {
-                  if (mounted) {
-                    Navigator.of(context).pop(recognitions);
+                if (!recognitionService.isRecognized) {
+                  //perform face recognition on detected faces
+                  if (recognitionService.performFaceRecognition(
+                    recognitions: recognitions,
+                    cameraImageFrame: image,
+                    faces: detectedFaces,
+                  )) {
+                    if (mounted) {
+                      Navigator.of(context).pop(recognitions);
+                    }
+                  } else {
+                    isBusy = false;
+                    setState(() {});
                   }
-                } else {
-                  isBusy = false;
-                  setState(() {});
                 }
               }
             }
+          } catch (e, s) {
+            log(e.toString());
+            log(s.toString());
           }
         },
       );

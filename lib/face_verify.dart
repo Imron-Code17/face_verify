@@ -1,5 +1,9 @@
 export 'package:face_verify/src/data/models/register_user_input_model.dart';
 export 'package:face_verify/src/data/models/user_model.dart';
+export 'package:face_verify/src/data/models/background_proccess_param.dart';
 export 'package:face_verify/src/ui/detection_view.dart';
 export 'package:face_verify/src/services/register_users.dart';
 export 'package:face_verify/src/ui/widgets/face_painter/face_overlay_shape.dart';
+export 'package:face_verify/src/services/face_detector_service.dart';
+export 'package:face_verify/src/services/recognition_service.dart';
+export 'package:face_verify/src/services/optimized_face_cropper.dart';
