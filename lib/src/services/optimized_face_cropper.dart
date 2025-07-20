@@ -1,12 +1,14 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:developer';
-import 'dart:ui';
 import 'dart:async';
 import 'dart:isolate';
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
+import 'package:exif/exif.dart';
 
 /// OptimizedFaceCropper dengan background processing menggunakan isolate
 class OptimizedFaceCropper {
@@ -435,20 +437,82 @@ class OptimizedFaceCropper {
 
   /// Original synchronous method (untuk backward compatibility)
   Future<String?> detectAndCropFace(String imagePath) async {
+    if (Platform.isAndroid) {
+      final result = await _detectAndCropFaceAndroid(imagePath);
+      return result;
+    } else {
+      final result = await _detectAndCropFaceIos(imagePath);
+      return result;
+    }
+  }
+
+  Future<String?> _detectAndCropFaceAndroid(String imagePath) async {
     try {
       final inputImage = InputImage.fromFilePath(imagePath);
       final faces = await _faceDetector.processImage(inputImage);
-
       if (faces.isEmpty) {
-        log('No faces detected in image');
+        log('#>> No faces detected in image');
+        return null;
+      }
+      final List<FaceData> faceDataList =
+          faces.map((face) => FaceData.fromFace(face)).toList();
+      final cropResult = await compute(
+          _cropFaceCompute,
+          CropInput(
+            imagePath: imagePath,
+            faces: faceDataList,
+          ));
+      return cropResult?.croppedImagePath;
+    } catch (e) {
+      log('Error in detectAndCropFace: $e');
+      return null;
+    }
+  }
+
+  Future<String?> _detectAndCropFaceIos(String imagePath) async {
+    try {
+      final processedPath = await preprocessImage(imagePath);
+      if (processedPath == null) {
+        log('Failed to preprocess image');
+        return null;
+      }
+      final rotatedPath = await _rotateImageBasedOnExif(processedPath);
+      final finalPath = rotatedPath ?? processedPath;
+      final file = File(finalPath);
+      if (!await file.exists()) {
+        log('Processed file does not exist');
         return null;
       }
 
-      // Convert ke FaceData
+      final inputImage = InputImage.fromFilePath(finalPath);
+      log('InputImage created successfully');
+
+      final faces = await _faceDetector.processImage(inputImage);
+      log('Faces detected: ${faces.length}');
+
+      if (faces.isEmpty) {
+        final lenientOptions = FaceDetectorOptions(
+          enableContours: false,
+          enableLandmarks: false,
+          enableClassification: false,
+          minFaceSize: 0.05,
+          performanceMode: FaceDetectorMode.fast,
+        );
+
+        final lenientDetector = FaceDetector(options: lenientOptions);
+        final retryFaces = await lenientDetector.processImage(inputImage);
+        await lenientDetector.close();
+
+        if (retryFaces.isEmpty) {
+          log('#>> No faces detected even with lenient settings');
+          return null;
+        }
+
+        log('Found ${retryFaces.length} faces with lenient settings');
+      }
+
       final List<FaceData> faceDataList =
           faces.map((face) => FaceData.fromFace(face)).toList();
-
-      // Process dengan compute untuk menghindari blocking UI
       final cropResult = await compute(
           _cropFaceCompute,
           CropInput(
@@ -459,6 +523,70 @@ class OptimizedFaceCropper {
       return cropResult?.croppedImagePath;
     } catch (e) {
       log('Error in detectAndCropFace: $e');
+      return null;
+    }
+  }
+
+  Future<String?> preprocessImage(String imagePath) async {
+    try {
+      final bytes = await File(imagePath).readAsBytes();
+      var image = img.decodeImage(bytes);
+
+      if (image == null) return null;
+
+      // Resize jika terlalu besar atau kecil
+      if (image.width > 1920 || image.height > 1920) {
+        image = img.copyResize(image,
+            width: 1920, height: 1920, interpolation: img.Interpolation.linear);
+      } else if (image.width < 100 || image.height < 100) {
+        image = img.copyResize(image, width: 300, height: 300);
+      }
+
+      // Convert ke JPEG dengan kualitas optimal
+      final tempDir = await getTemporaryDirectory();
+      final processedPath =
+          '${tempDir.path}/processed_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await File(processedPath).writeAsBytes(img.encodeJpg(image, quality: 85));
+
+      return processedPath;
+    } catch (e) {
+      log('Error preprocessing image: $e');
+      return null;
+    }
+  }
+
+  Future<String?> _rotateImageBasedOnExif(String imagePath) async {
+    try {
+      final bytes = await File(imagePath).readAsBytes();
+      final image = img.decodeImage(bytes);
+      if (image == null) return null;
+
+      // Read EXIF orientation
+      final exifData = await readExifFromBytes(bytes);
+      // Fix: Access the value directly instead of using .first
+      final orientationTag = exifData['Image Orientation'];
+      final orientation = orientationTag?.values.toList().first?.toInt() ?? 1;
+
+      img.Image rotatedImage = image;
+      switch (orientation) {
+        case 3:
+          rotatedImage = img.copyRotate(image, angle: 180);
+          break;
+        case 6:
+          rotatedImage = img.copyRotate(image, angle: 90);
+          break;
+        case 8:
+          rotatedImage = img.copyRotate(image, angle: -90);
+          break;
+      }
+
+      final tempDir = await getTemporaryDirectory();
+      final rotatedPath =
+          '${tempDir.path}/rotated_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await File(rotatedPath).writeAsBytes(img.encodeJpg(rotatedImage));
+      return rotatedPath;
+    } catch (e) {
+      log('Error rotating image: $e');
       return null;
     }
   }

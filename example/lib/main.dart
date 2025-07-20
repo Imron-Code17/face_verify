@@ -267,11 +267,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _registerUsers() async {
-    if (cameras.isEmpty) {
-      _showErrorDialog('No cameras available');
-      return;
-    }
-
     setState(() {
       isLoading = true;
     });
@@ -321,7 +316,11 @@ class _MyHomePageState extends State<MyHomePage> {
       // Register the user
       final newUsers = await registerUsers(
         registerUserInputs: [registerInput],
-        cameraDescription: cameras.first,
+        cameraDescription: CameraDescription(
+          name: '',
+          lensDirection: CameraLensDirection.back,
+          sensorOrientation: 1,
+        ),
       );
 
       final encodeData = json.encode(newUsers.first.toJson());
@@ -361,40 +360,6 @@ class _MyHomePageState extends State<MyHomePage> {
         _showErrorDialog('Error registering user: ${e.toString()}');
       }
     }
-  }
-
-  Future<String?> _showNameInputDialog() async {
-    String? name;
-    return showDialog<String>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Enter User Name'),
-        content: TextField(
-          onChanged: (value) => name = value,
-          decoration: const InputDecoration(
-            hintText: 'Enter full name...',
-            border: OutlineInputBorder(),
-          ),
-          textCapitalization: TextCapitalization.words,
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, null),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (name != null && name!.trim().isNotEmpty) {
-                Navigator.pop(context, name!.trim());
-              }
-            },
-            child: const Text('Register'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _removeUser(int index) {

@@ -190,7 +190,6 @@ class _LiveFaceState extends State<LiveFace> with WidgetsBindingObserver {
 
   /// Process camera frame for continuous detection
   Future<void> _processCameraFrame(CameraImage image) async {
-    // TODO: Add continuous face detection here
     // This method can be used for real-time face detection
     // without capturing the image
     log('Processing camera frame...');
@@ -244,8 +243,6 @@ class _LiveFaceState extends State<LiveFace> with WidgetsBindingObserver {
     if (imageFile == null) return;
 
     log('Processing captured image for face detection...');
-
-    // TODO: Integrate dengan face detector
     // Contoh implementasi dengan ML Kit:
     _detectFacesInImage(imageFile);
   }
@@ -254,7 +251,6 @@ class _LiveFaceState extends State<LiveFace> with WidgetsBindingObserver {
   void _detectFacesInImage(File imageFile) {
     log('Face detection placeholder - Image: ${imageFile.path}');
 
-    // TODO: Implementasi actual face detection
     // Contoh dengan ML Kit:
     /*
     final inputImage = InputImage.fromFile(imageFile);
