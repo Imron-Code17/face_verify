@@ -18,7 +18,7 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 /// the embeddings of the registered users.
 class RecognitionModel {
   late Interpreter interpreter;
-  late InterpreterOptions _interpreterOptions;
+  InterpreterOptions? _interpreterOptions;
 
   static const int inputWidth = 160;
   static const int inputHeight = 160;
@@ -46,23 +46,21 @@ class RecognitionModel {
               TfLiteGpuInferencePriority.TFLITE_GPU_INFERENCE_PRIORITY_AUTO,
         ),
       );
-      _interpreterOptions.addDelegate(delegate);
+      _interpreterOptions?.addDelegate(delegate);
     } else if (Platform.isIOS) {
       try {
         final xnnDelegate = XNNPackDelegate();
-        _interpreterOptions.addDelegate(xnnDelegate);
+        _interpreterOptions?.addDelegate(xnnDelegate);
         log('✅ XNNPackDelegate berhasil dipasang di iOS');
       } catch (e) {
-        final xnnDelegate = XNNPackDelegate();
-        _interpreterOptions.addDelegate(xnnDelegate);
-        _interpreterOptions.useMetalDelegateForIOS = true;
+        _interpreterOptions?.useMetalDelegateForIOS = true;
         log('❌ Gagal pasang XNNPack di iOS: $e');
         throw Exception(e);
       }
     }
 
     if (numThreads != null) {
-      _interpreterOptions.threads = numThreads;
+      _interpreterOptions?.threads = numThreads;
     }
     _loadModel();
   }
