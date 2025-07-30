@@ -32,10 +32,8 @@ class RecognitionModel {
   /// - Parameter numThreads: The number of threads to use for inference. If not specified,
   ///   the default number of threads will be used.
   RecognitionModel({int? numThreads}) {
-    late Delegate delegate;
-
     if (Platform.isAndroid) {
-      delegate = GpuDelegateV2(
+      final delegate = GpuDelegateV2(
         options: GpuDelegateOptionsV2(
           isPrecisionLossAllowed: false,
           inferencePreference: TfLiteGpuInferenceUsage
@@ -48,22 +46,16 @@ class RecognitionModel {
               TfLiteGpuInferencePriority.TFLITE_GPU_INFERENCE_PRIORITY_AUTO,
         ),
       );
+      _interpreterOptions.addDelegate(delegate);
     } else if (Platform.isIOS) {
-      // try {
-      //   delegate = GpuDelegate(
-      //     options: GpuDelegateOptions(
-      //       allowPrecisionLoss: true,
-      //       waitType: TFLGpuDelegateWaitType.TFLGpuDelegateWaitTypeActive,
-      //     ),
-      //   );
-      //   log('✅ iOS GPU delegate created successfully');
-      // } catch (e) {
-      //   log('⚠️ iOS GPU delegate failed, falling back to CPU: $e');
-      //   delegate = XNNPackDelegate();
-      // }
+      try {
+        final xnnDelegate = XNNPackDelegate();
+        _interpreterOptions.addDelegate(xnnDelegate);
+        log('✅ XNNPackDelegate berhasil dipasang di iOS');
+      } catch (e) {
+        log('❌ Gagal pasang XNNPack di iOS: $e');
+      }
     }
-
-    _interpreterOptions = InterpreterOptions()..addDelegate(delegate);
 
     if (numThreads != null) {
       _interpreterOptions.threads = numThreads;
