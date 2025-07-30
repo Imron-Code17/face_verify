@@ -49,18 +49,18 @@ class RecognitionModel {
         ),
       );
     } else if (Platform.isIOS) {
-      try {
-        delegate = GpuDelegate(
-          options: GpuDelegateOptions(
-            allowPrecisionLoss: true,
-            waitType: TFLGpuDelegateWaitType.TFLGpuDelegateWaitTypeActive,
-          ),
-        );
-        log('✅ iOS GPU delegate created successfully');
-      } catch (e) {
-        log('⚠️ iOS GPU delegate failed, falling back to CPU: $e');
-        delegate = XNNPackDelegate();
-      }
+      // try {
+      //   delegate = GpuDelegate(
+      //     options: GpuDelegateOptions(
+      //       allowPrecisionLoss: true,
+      //       waitType: TFLGpuDelegateWaitType.TFLGpuDelegateWaitTypeActive,
+      //     ),
+      //   );
+      //   log('✅ iOS GPU delegate created successfully');
+      // } catch (e) {
+      //   log('⚠️ iOS GPU delegate failed, falling back to CPU: $e');
+      //   delegate = XNNPackDelegate();
+      // }
     }
 
     _interpreterOptions = InterpreterOptions()..addDelegate(delegate);
