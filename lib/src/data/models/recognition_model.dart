@@ -53,8 +53,7 @@ class RecognitionModel {
         _interpreterOptions.addDelegate(xnnDelegate);
         log('✅ XNNPackDelegate berhasil dipasang di iOS');
       } catch (e) {
-        final xnnDelegate = XNNPackDelegate();
-        _interpreterOptions.addDelegate(xnnDelegate);
+        _interpreterOptions.useMetalDelegateForIOS = true;
         log('❌ Gagal pasang XNNPack di iOS: $e');
         throw Exception(e);
       }
