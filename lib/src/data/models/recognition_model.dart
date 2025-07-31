@@ -1,4 +1,4 @@
-// ignore_for_file: implementation_imports
+// ignore_for_file: implementation_imports, prefer_final_fields
 
 import 'dart:io';
 import 'dart:math' as math;
@@ -17,8 +17,8 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 /// performing face recognition by comparing the embeddings of the detected faces with
 /// the embeddings of the registered users.
 class RecognitionModel {
-  late Interpreter interpreter;
-  InterpreterOptions? _interpreterOptions;
+  InterpreterOptions _interpreterOptions = InterpreterOptions();
+  Interpreter? interpreter;
 
   static const int inputWidth = 160;
   static const int inputHeight = 160;
@@ -46,21 +46,21 @@ class RecognitionModel {
               TfLiteGpuInferencePriority.TFLITE_GPU_INFERENCE_PRIORITY_AUTO,
         ),
       );
-      _interpreterOptions?.addDelegate(delegate);
+      _interpreterOptions.addDelegate(delegate);
     } else if (Platform.isIOS) {
       try {
         final xnnDelegate = XNNPackDelegate();
-        _interpreterOptions?.addDelegate(xnnDelegate);
+        _interpreterOptions.addDelegate(xnnDelegate);
         log('✅ XNNPackDelegate berhasil dipasang di iOS');
       } catch (e) {
-        _interpreterOptions?.useMetalDelegateForIOS = true;
+        _interpreterOptions.useMetalDelegateForIOS = true;
         log('❌ Gagal pasang XNNPack di iOS: $e');
         throw Exception(e);
       }
     }
 
     if (numThreads != null) {
-      _interpreterOptions?.threads = numThreads;
+      _interpreterOptions.threads = numThreads;
     }
     _loadModel();
   }
@@ -159,7 +159,7 @@ class RecognitionModel {
     List output = List.filled(1 * 512, 0).reshape([1, 512]);
 
     //performs inference
-    interpreter.run(input, output);
+    interpreter?.run(input, output);
 
     //convert dynamic list to double list
     List<double> embeddings = output.first.cast<double>();
@@ -193,6 +193,6 @@ class RecognitionModel {
   }
 
   void close() {
-    interpreter.close();
+    interpreter?.close();
   }
 }
